@@ -31,5 +31,8 @@ namespace gmusic_cli {
 
         [Get("get_by_search?type=matches")]
         Task<string> SearchForArtist(string artist);
+
+        [Get("get_top_tracks_artist?type=artist")]
+        Task<string> GetTopSongsForArtist(string id);
     }
 }

@@ -24,7 +24,7 @@ namespace gmusic_cli {
             var options = new List<string>();
             options.Add("Get User Playlist");
             options.Add("Get User Station");
-            options.Add("Get Artist Discography");
+            options.Add("Search Artist");
 
             var selection = ShowSelection(options);
 
@@ -32,14 +32,16 @@ namespace gmusic_cli {
             {
                 case "0" : GetUserPlaylist(); break;
                 case "1" : GetUserStation(); break;
-                case "2" : GetArtistDiscography(); break;
+                case "2" : SearchArtist(); break;
             }
         }
 
-        private void GetArtistDiscography()
+        private void SearchArtist()
         {
             string artistId = string.Empty;
             string selection = string.Empty;
+            string artistName = string.Empty;
+
             do
             {
                 selection = ShowSelection(new List<string>() { "Please enter Artist Name:"});
@@ -52,15 +54,38 @@ namespace gmusic_cli {
                 else
                 {
                     artistId = task.Result;
+                    artistName = selection;
                 }
             }
             while(string.IsNullOrEmpty(artistId));
 
+            var options = new List<string>();
+            options.Add("Get Discography");
+            options.Add("Get Top Songs");
+
+            selection = ShowSelection(options);
+
+            switch(selection)
+            {
+                case "0" : GetArtistDiscography(artistId); break;
+                case "1" : GetTopSongs(artistName, artistId); break;
+            }
+        }
+
+        private void GetTopSongs(string artistName, string artistId)
+        {
+            var topSongs = api.GetTopSongsForArtist(artistId);
+
+            SaveAsM3u($"Top_Songs_{artistName}", topSongs.Result);
+        }
+
+        private void GetArtistDiscography(string artistId)
+        {
             var discoGraphy = api.GetDiscoGraphyArtist(artistId);
 
             var entries = ConvertResponseToTuple(discoGraphy.Result, 1);
 
-            selection = ShowSelection(entries.Select(t => t[0]).ToList());
+            var selection = ShowSelection(entries.Select(t => t[0]).ToList());
 
             var selectedItem = entries[int.Parse(selection)];
 
@@ -94,11 +119,13 @@ namespace gmusic_cli {
             var playList = api.GetPlaylist(playlistId);
             SaveAsM3u(playlistName, playList.Result);
         }
+        
         private void DownloadStation(string stationName, string stationId)
         {
             var station = api.GetStation(stationId);
             SaveAsM3u(stationName, station.Result);
         }
+
         private void DownloadAlbum(string albumName, string albumId)
         {
             var album = api.GetAlbum(albumId);
